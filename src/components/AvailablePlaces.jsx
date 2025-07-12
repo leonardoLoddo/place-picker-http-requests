@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import Places from "./Places.jsx";
 import ErrorPage from "./ErrorPage.jsx";
+import { sortPlacesByDistance } from "../loc.js";
+import { fetchAvailablePlaces } from "../http.js";
 
 export default function AvailablePlaces({ onSelectPlace }) {
   //quando eseguo il fetch dei dati in react tipicamente avró bisogno di 3 state:
@@ -12,18 +14,18 @@ export default function AvailablePlaces({ onSelectPlace }) {
     async function fetchPlaces() {
       setIsFetching(true);
       try {
-        // con await aspetto che la richiesta HTTP al backend venga completata (cioè che fetch risponda)
-        const response = await fetch("http://localhost:3000/places"); //mando la richiesta get '/places' al backend sulla porta 3000
+        const places = await fetchAvailablePlaces(); //le funzioni async restituiscono una promise
 
-        // con await aspetto che il contenuto della risposta venga trasformato in oggetto JavaScript.
-        const data = await response.json(); //riconverto la risposta da json al suo tipo di dato originale
-
-        if (!response.ok) {
-          throw new Error("Fallimento nel caricamento delle Destinazioni");
-        }
-
-        //ora posso utilizzare i dati in questo contesto
-        setAvailablePlaces(data.places); //utilizzo i dati per valorizzare lo state
+        navigator.geolocation.getCurrentPosition((position) => {
+          // richiedo la posizione al mio utente e riordino le destinazioni in base alla distanza
+          const sortedPlaces = sortPlacesByDistance(
+            places,
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          setAvailablePlaces(sortedPlaces); //utilizzo i dati per valorizzare lo state
+          setIsFetching(false);
+        });
       } catch (error) {
         setError({
           message:
@@ -31,9 +33,8 @@ export default function AvailablePlaces({ onSelectPlace }) {
             "Impossibile caricare le destinazioni, riprova più tardi...",
         }); //salvo i dati dell'errore nello state
         //in questo modo potrò riutilizzarli nel componente ErrorPage
+        setIsFetching(false);
       }
-
-      setIsFetching(false);
     }
 
     fetchPlaces();
