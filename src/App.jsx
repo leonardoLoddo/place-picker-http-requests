@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback } from "react";
 
 import Places from "./components/Places.jsx";
 import Modal from "./components/Modal.jsx";
@@ -7,38 +7,21 @@ import logoImg from "./assets/logo.png";
 import AvailablePlaces from "./components/AvailablePlaces.jsx";
 import ErrorPage from "./components/ErrorPage.jsx";
 import { fetchUserPlaces, updateUserPlaces } from "./http.js";
+import { useFetch } from "./hooks/useFetch.js";
 
 function App() {
   const selectedPlace = useRef();
 
-  //quando eseguo il fetch dei dati in react tipicamente avró bisogno di 3 state:
-  const [userPlaces, setUserPlaces] = useState([]); //state dei dati
-  const [isFetching, setIsFetching] = useState(false); //state di caricamento
-  const [error, setError] = useState(); // state di errore
   const [errorUpdatingPlaces, setErrorUpdatingPlaces] = useState(null);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
-  useEffect(() => {
-    async function fetchPlaces() {
-      setIsFetching(true);
-      try {
-        const places = await fetchUserPlaces(); //le funzioni async restituiscono una promise
-
-        setUserPlaces(places); //utilizzo i dati per valorizzare lo state
-      } catch (error) {
-        setError({
-          message:
-            error.message ||
-            "Impossibile caricare le selezioni, riprova più tardi...",
-        }); //salvo i dati dell'errore nello state
-        //in questo modo potrò riutilizzarli nel componente ErrorPage
-      }
-      setIsFetching(false);
-    }
-
-    fetchPlaces();
-  }, []); //utilizzo useEffect in modo tale da non creare un loop infinito andando a rieseguire ogni volta la fetch, che a sua volta settando lo state fará rieseguire la funzione componente
+  const {
+    isFetching,
+    error,
+    fetchedData: userPlaces,
+    setFetchedData: setUserPlaces,
+  } = useFetch(fetchUserPlaces, []); //tutto lo state utilizzato all'interno del custom hook funzionerá esattamente come se fosse stato creato nel componente stesso
 
   function handleStartRemovePlace(place) {
     setModalIsOpen(true);
@@ -89,7 +72,7 @@ function App() {
 
       setModalIsOpen(false);
     },
-    [userPlaces]
+    [userPlaces, setUserPlaces]
   );
 
   function handleError() {

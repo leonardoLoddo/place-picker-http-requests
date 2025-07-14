@@ -20,6 +20,7 @@ Ogni meta selezionata può essere salvata nel backend tramite richieste HTTP, pe
 - useState & useEffect
 - useRef
 - useCallback
+- Custom hooks per non ripetere il codice
 - HTTP requests con `fetch()`
 - Geolocalizzazione dell’utente
 - Backend mock per la persistenza dei dati
